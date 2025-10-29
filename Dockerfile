@@ -1,35 +1,41 @@
-# ===============================
-# Stage 1 — Build Angular app
-# ===============================
-FROM node:20-alpine AS build
+# ============================
+# Stage 1: Build Angular App
+# ============================
+FROM node:20 AS build
 
+# Set working directory
 WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install -g @angular/cli && npm install
+RUN npm install -g @angular/cli@latest && npm install
 
 # Copy the entire project
 COPY . .
 
-# Accept API_URL as build argument
+# Optionally override API URL at build time (can be passed via --build-arg)
 ARG API_URL=http://localhost:8081/v1
 
-# 🔧 Replace apiUrl dynamically in your environment file
+# Replace apiUrl in environment.ts dynamically
 RUN sed -i "s|apiUrl: '.*'|apiUrl: '${API_URL}'|g" src/app/environments/environment.ts
 
-# ✅ Build Angular app for production
-RUN npx ng build --configuration production
+# Build Angular app for production
+RUN npm run build -- --configuration production
 
-# ===============================
-# Stage 2 — Serve via NGINX
-# ===============================
+# ============================
+# Stage 2: Serve with Nginx
+# ============================
 FROM nginx:alpine
 
-# Copy built Angular app from previous stage
+# Copy the Angular build output to Nginx's HTML folder
 COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy custom Nginx config (optional)
+# Uncomment this if you have an nginx.conf file in your repo
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
 EXPOSE 80
 
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
