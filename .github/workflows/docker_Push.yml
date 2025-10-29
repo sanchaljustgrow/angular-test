@@ -32,7 +32,7 @@ jobs:
     - name: Build & Push Frontend
       uses: docker/build-push-action@v5
       with:
-        context: ./frontend
+        context: .
         push: true
         tags: sanchaljustgrow/angular-test-frontend:latest
         platforms: linux/amd64
