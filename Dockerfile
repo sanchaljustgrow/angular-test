@@ -14,7 +14,7 @@ RUN npm install -g @angular/cli && \
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 COPY --from=builder /app/dist/ /usr/share/nginx/html
-COPY nginx/nginx.config /etc/nginx/templates/default.conf.template
+
 
 EXPOSE 8081
 CMD ["nginx", "-g", "daemon off;"]
