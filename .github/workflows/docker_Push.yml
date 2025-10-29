@@ -25,7 +25,7 @@ jobs:
       - name: Build & Push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./ang-spring/frontend   # 👈 updated path
+          context: . # 👈 updated path
           push: true
           tags: sanchaljustgrow/ang-spring-frontend:latest
           platforms: linux/amd64
