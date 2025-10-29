@@ -1,40 +1,38 @@
-
+# ===============================
 # Stage 1 — Build Angular app
-
+# ===============================
 FROM node:20-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependency files
+# Copy dependencies and install
 COPY package*.json ./
-
-# Install dependencies and Angular CLI
 RUN npm install -g @angular/cli && npm install
 
 # Copy source code
 COPY . .
 
-# Set environment variable (available during build)
+# Inject API URL dynamically
 ARG API_URL=http://localhost:8081/v1
 ENV API_URL=${API_URL}
 
-# Replace apiUrl in environment.ts dynamically before building
-RUN sed -i "s|apiUrl: '.*'|apiUrl: '${API_URL}'|g" src/environments/environment.ts
+# ✅ Update correct path (src/app/environments)
+RUN if [ -f src/app/environments/environment.ts ]; then \
+      sed -i "s|apiUrl: '.*'|apiUrl: '${API_URL}'|g" src/app/environments/environment.ts; \
+    else \
+      echo "⚠️ environment.ts not found in src/app/environments"; \
+    fi
 
-# Build Angular for production
+# Build Angular app for production
 RUN ng build --configuration production
 
-
+# ===============================
 # Stage 2 — Serve using NGINX
-
+# ===============================
 FROM nginx:alpine
 
-# Copy build output to nginx folder
+# Copy compiled app from builder
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose port 80
 EXPOSE 80
-
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
