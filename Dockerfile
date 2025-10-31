@@ -1,20 +1,20 @@
-# Stage 1: Build
-FROM node:18 AS build
+
+# ---------- Stage 1: Build Angular App ----------
+FROM node:20 AS build
+ENV NG_APP_URL="https://dummyjson.com/posts/search?q=love"
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN npm run build --configuration=production --output-path=dist/TestEnv
 
-# Optional quick fix for broken CSS
-RUN sed -i 's|url(|/*url(|g' src/app/login/login.component.css
+# ---------- Stage 2: Nginx Server ----------
+FROM nginx:1.25-alpine
 
-# Build Angular without CSS optimization
-RUN npm run build -- --configuration production --optimization=false
+# Copy the actual build output
+COPY --from=build /app/dist/TestEnv /usr/share/nginx/html
 
-# Stage 2: Serve
-FROM nginx:alpine
-COPY --from=build /app/dist/ /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
